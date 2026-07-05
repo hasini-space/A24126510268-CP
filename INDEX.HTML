@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Files Upload List</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:20px;background:#f7f8fb;color:#111}
+    .container{max-width:900px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 6px 18px rgba(31,41,55,0.06)}
+    h1{margin:0 0 10px;font-size:1.2rem}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1;min-width:280px}
+    .card{border:1px solid #e6e9ef;padding:12px;border-radius:6px;background:#fcfdff}
+    ul{list-style:none;padding:0;margin:8px 0}
+    li{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:6px}
+    li:nth-child(odd){background:#fff}
+    li:nth-child(even){background:#fbfcff}
+    button{background:#0366d6;color:#fff;border:0;padding:6px 10px;border-radius:6px;cursor:pointer}
+    button.ghost{background:transparent;color:#0366d6;border:1px solid #dbe7ff}
+    input[type="text"]{width:100%;padding:8px;border:1px solid #d7dce8;border-radius:6px}
+    .small{font-size:0.9rem;color:#555}
+    .controls{display:flex;gap:8px;margin-top:8px}
+    .actions button{margin-left:6px}
+    .empty{color:#777;padding:10px;text-align:center}
+    footer{margin-top:12px;font-size:0.85rem;color:#666}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>INDEX.HTML — Files to Upload / Uploaded Files</h1>
+    <p class="small">Use this page to track files you plan to upload and files you've already uploaded. Data is stored locally in your browser.</p>
+
+    <div class="row">
+      <div class="col card">
+        <strong>Files you'll upload</strong>
+        <div style="margin-top:10px">
+          <label for="filenameInput" class="small">Add file name</label>
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <input id="filenameInput" type="text" placeholder="e.g. assignment1.java" />
+            <button id="addBtn">Add</button>
+          </div>
+        </div>
+
+        <ul id="toUploadList"></ul>
+        <div class="controls">
+          <input id="fileSelector" type="file" multiple style="display:none" />
+          <button id="chooseFiles" class="ghost">Choose files to mark as uploaded</button>
+          <button id="clearToUpload" class="ghost">Clear list</button>
+        </div>
+      </div>
+
+      <div class="col card">
+        <strong>Uploaded files</strong>
+        <p class="small">Files you marked uploaded (or selected via the file chooser)</p>
+        <ul id="uploadedList"></ul>
+        <div class="controls">
+          <button id="exportBtn" class="ghost">Export as JSON</button>
+          <button id="clearUploaded" class="ghost">Clear uploaded</button>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Tip: You can select real files with "Choose files to mark as uploaded" — their names will be added to the Uploaded list. The lists persist in localStorage for this browser on this device.
+    </footer>
+  </div>
+
+<script>
+(function(){
+  const LS_TO = 'index_html_toUpload';
+  const LS_UP = 'index_html_uploaded';
+
+  const toUploadListEl = document.getElementById('toUploadList');
+  const uploadedListEl = document.getElementById('uploadedList');
+  const filenameInput = document.getElementById('filenameInput');
+  const addBtn = document.getElementById('addBtn');
+  const clearToUpload = document.getElementById('clearToUpload');
+  const clearUploaded = document.getElementById('clearUploaded');
+  const chooseFiles = document.getElementById('chooseFiles');
+  const fileSelector = document.getElementById('fileSelector');
+  const exportBtn = document.getElementById('exportBtn');
+
+  let toUpload = JSON.parse(localStorage.getItem(LS_TO) || '[]');
+  let uploaded = JSON.parse(localStorage.getItem(LS_UP) || '[]');
+
+  function save(){
+    localStorage.setItem(LS_TO, JSON.stringify(toUpload));
+    localStorage.setItem(LS_UP, JSON.stringify(uploaded));
+  }
+
+  function render(){
+    toUploadListEl.innerHTML = '';
+    uploadedListEl.innerHTML = '';
+
+    if(toUpload.length === 0){
+      const e = document.createElement('div'); e.className='empty'; e.textContent='No files queued for upload'; toUploadListEl.appendChild(e);
+    } else {
+      toUpload.forEach((name, idx)=>{
+        const li = document.createElement('li');
+        const span = document.createElement('span'); span.textContent = name;
+        const actions = document.createElement('div'); actions.className='actions';
+        const mark = document.createElement('button'); mark.textContent='Mark uploaded';
+        mark.onclick = ()=>{ uploaded.unshift(name); toUpload.splice(idx,1); save(); render(); };
+        const del = document.createElement('button'); del.textContent='Remove'; del.className='ghost'; del.onclick = ()=>{ toUpload.splice(idx,1); save(); render(); };
+        actions.appendChild(mark); actions.appendChild(del);
+        li.appendChild(span); li.appendChild(actions);
+        toUploadListEl.appendChild(li);
+      });
+    }
+
+    if(uploaded.length === 0){
+      const e = document.createElement('div'); e.className='empty'; e.textContent='No uploaded files yet'; uploadedListEl.appendChild(e);
+    } else {
+      uploaded.forEach((name, idx)=>{
+        const li = document.createElement('li');
+        const span = document.createElement('span'); span.textContent = name;
+        const actions = document.createElement('div'); actions.className='actions';
+        const del = document.createElement('button'); del.textContent='Remove'; del.className='ghost'; del.onclick = ()=>{ uploaded.splice(idx,1); save(); render(); };
+        actions.appendChild(del);
+        li.appendChild(span); li.appendChild(actions);
+        uploadedListEl.appendChild(li);
+      });
+    }
+  }
+
+  addBtn.addEventListener('click', ()=>{
+    const val = filenameInput.value && filenameInput.value.trim();
+    if(!val) return;
+    if(!toUpload.includes(val) && !uploaded.includes(val)){
+      toUpload.unshift(val);
+      filenameInput.value='';
+      save(); render();
+    } else {
+      alert('File already in a list');
+    }
+  });
+
+  filenameInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') addBtn.click(); });
+
+  clearToUpload.addEventListener('click', ()=>{
+    if(confirm('Clear all files queued for upload?')){ toUpload = []; save(); render(); }
+  });
+
+  clearUploaded.addEventListener('click', ()=>{
+    if(confirm('Clear uploaded files list?')){ uploaded = []; save(); render(); }
+  });
+
+  chooseFiles.addEventListener('click', ()=> fileSelector.click());
+
+  fileSelector.addEventListener('change', (e)=>{
+    const files = Array.from(e.target.files || []);
+    files.forEach(f=>{
+      if(!uploaded.includes(f.name)) uploaded.unshift(f.name);
+      // also remove from toUpload if present
+      const i = toUpload.indexOf(f.name); if(i!==-1) toUpload.splice(i,1);
+    });
+    fileSelector.value=''; save(); render();
+  });
+
+  exportBtn.addEventListener('click', ()=>{
+    const data = { toUpload, uploaded };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'index-files.json'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // initial render
+  render();
+})();
+</script>
+</body>
+</html>
