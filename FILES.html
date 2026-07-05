@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Repository Files — hasini-space/A24126510268-CP</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:20px;background:#f7f8fb;color:#111}
+    .container{max-width:980px;margin:0 auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 6px 18px rgba(31,41,55,0.06)}
+    h1{margin:0 0 6px}
+    p.small{color:#555;margin:6px 0 16px}
+    ul{list-style:none;padding:0;margin:0}
+    li{padding:8px 10px;border-bottom:1px solid #f0f2f6}
+    a{color:#0366d6;text-decoration:none}
+    a:hover{text-decoration:underline}
+    .meta{font-size:0.9rem;color:#666}
+    .controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    input[type="text"]{padding:8px;border:1px solid #d7dce8;border-radius:6px;min-width:220px}
+    button{background:#0366d6;color:#fff;border:0;padding:8px 10px;border-radius:6px;cursor:pointer}
+    button.ghost{background:transparent;color:#0366d6;border:1px solid #dbe7ff}
+    .error{color:#b71c1c}
+    .empty{color:#777;padding:10px;text-align:center}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Files in repository: hasini-space / A24126510268-CP</h1>
+    <p class="small">This page fetches the repository tree from the GitHub API and lists every file with a link to view it on GitHub. No authentication is required for public repositories. If the repo is private or the API limit is reached you may need to provide a token or view files in the GitHub UI.</p>
+
+    <div class="controls">
+      <input id="filter" type="text" placeholder="Filter by name or extension (e.g. .java, README)" />
+      <button id="refresh" class="ghost">Refresh</button>
+      <div style="margin-left:auto" class="meta" id="count">Loading…</div>
+    </div>
+
+    <div id="listArea"><div class="empty">Loading file list from GitHub…</div></div>
+  </div>
+
+<script>
+(function(){
+  const owner = 'hasini-space';
+  const repo = 'A24126510268-CP';
+  const branch = 'main';
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+  const listArea = document.getElementById('listArea');
+  const filterInput = document.getElementById('filter');
+  const refreshBtn = document.getElementById('refresh');
+  const countEl = document.getElementById('count');
+
+  let files = [];
+
+  function render(filter){
+    const out = document.createElement('ul');
+    const f = (filter||'').trim().toLowerCase();
+    const shown = files.filter(file => {
+      if(!f) return true;
+      return file.path.toLowerCase().includes(f) || file.name.toLowerCase().includes(f);
+    });
+
+    if(shown.length === 0){
+      listArea.innerHTML = '<div class="empty">No files match the filter.</div>';
+    } else {
+      shown.forEach(item => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        const githubUrl = `https://github.com/${owner}/${repo}/blob/${branch}/${encodeURIComponent(item.path).replace(/%2F/g,'/')}`;
+        a.href = githubUrl;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.textContent = item.path;
+        const meta = document.createElement('div'); meta.className='meta'; meta.textContent = `${item.size} bytes`;
+        li.appendChild(a);
+        li.appendChild(meta);
+        out.appendChild(li);
+      });
+      listArea.innerHTML = '';
+      listArea.appendChild(out);
+    }
+    countEl.textContent = `${shown.length} / ${files.length}`;
+  }
+
+  function showError(msg){
+    listArea.innerHTML = `<div class="error">${msg}</div>`;
+    countEl.textContent = '—';
+  }
+
+  function load(){
+    listArea.innerHTML = '<div class="empty">Loading file list from GitHub…</div>';
+    fetch(apiUrl)
+      .then(res => {
+        if(res.status === 404) throw new Error('Repository or branch not found (404).');
+        if(res.status === 403) throw new Error('API rate limit or access denied (403).');
+        return res.json();
+      })
+      .then(data => {
+        if(!data || !data.tree) throw new Error('Unexpected API response.');
+        // tree entries: { path, mode, type, sha, size }
+        files = data.tree.filter(e => e.type === 'blob').map(e => ({ path: e.path, size: e.size || 0, name: e.path.split('/').pop() }));
+        files.sort((a,b)=> a.path.localeCompare(b.path));
+        render(filterInput.value);
+      })
+      .catch(err => {
+        showError('Error loading files: ' + err.message + ' You can view files directly on GitHub.');
+      });
+  }
+
+  refreshBtn.addEventListener('click', ()=> load());
+  filterInput.addEventListener('input', ()=> render(filterInput.value));
+
+  // initial load
+  load();
+})();
+</script>
+</body>
+</html>
