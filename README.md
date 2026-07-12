@@ -101,8 +101,7 @@ java problems.YourProblemClass
 ## 📺 Live Demo
 
 Experience the problem solutions and documentation:
-
-- **[📂 Repository File Browser - FILES.html](https://raw.githubusercontent.com/hasini-space/A24126510268-CP/main/FILES.html)** - Interactive file listing with search and filtering
+- https://hasini-space.github.io/A24126510268-CP/FILES.html
 - **[Live Demo](https://hasini-space.github.io/A24126510268-CP/)** - Browse the interactive documentation
 - **[Problem Catalog](https://hasini-space.github.io/A24126510268-CP/web/problems.html)** - View all competitive programming problems
 - **[Solutions Guide](https://hasini-space.github.io/A24126510268-CP/web/solutions.html)** - Step-by-step solution walkthroughs
