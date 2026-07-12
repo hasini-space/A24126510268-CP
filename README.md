@@ -4,7 +4,7 @@ A competitive programming solutions repository containing optimized algorithms a
 
 ## 📋 Overview
 
-This repository is a curated collection of competitive programming solutions, algorithms, and data structures implementations. It serves as a reference guide for solving complex computational problems with efficient Java implementations and interactive HTML documentation.
+This repository is a curated collection of competitive programming solutions, algorithms, and data structures implementations. It serves as a reference guide for solving complex computational problems with optimal strategies and implementations.
 
 ## 🚀 Features
 
@@ -25,6 +25,7 @@ This repository is a curated collection of competitive programming solutions, al
 ```
 A24126510268-CP/
 ├── README.md
+├── FILES.html               # 📂 Interactive repository file browser
 ├── src/
 │   ├── algorithms/      # Core algorithm implementations
 │   ├── problems/        # Competitive programming solutions
@@ -101,6 +102,7 @@ java problems.YourProblemClass
 
 Experience the problem solutions and documentation:
 
+- **[📂 Repository File Browser - FILES.html](https://raw.githubusercontent.com/hasini-space/A24126510268-CP/main/FILES.html)** - Interactive file listing with search and filtering
 - **[Live Demo](https://hasini-space.github.io/A24126510268-CP/)** - Browse the interactive documentation
 - **[Problem Catalog](https://hasini-space.github.io/A24126510268-CP/web/problems.html)** - View all competitive programming problems
 - **[Solutions Guide](https://hasini-space.github.io/A24126510268-CP/web/solutions.html)** - Step-by-step solution walkthroughs
