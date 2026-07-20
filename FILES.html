@@ -42,6 +42,7 @@
   const repo = 'A24126510268-CP';
   const branch = 'main';
   const apiUrl = `https://api.github.com/repos/${owner}/${repo}/git/trees/${branch}?recursive=1`;
+  const localJson = 'FILES.json';
   const listArea = document.getElementById('listArea');
   const filterInput = document.getElementById('filter');
   const refreshBtn = document.getElementById('refresh');
@@ -86,21 +87,38 @@
 
   function load(){
     listArea.innerHTML = '<div class="empty">Loading file list from GitHub…</div>';
-    fetch(apiUrl)
+
+    // First try to load a pre-generated FILES.json served from the site itself (no API calls, no rate limits)
+    fetch(localJson)
       .then(res => {
-        if(res.status === 404) throw new Error('Repository or branch not found (404).');
-        if(res.status === 403) throw new Error('API rate limit or access denied (403).');
+        if(!res.ok) throw new Error('local FILES.json not found');
         return res.json();
       })
       .then(data => {
-        if(!data || !data.tree) throw new Error('Unexpected API response.');
-        // tree entries: { path, mode, type, sha, size }
+        if(!data || !data.tree) throw new Error('Unexpected local FILES.json format.');
         files = data.tree.filter(e => e.type === 'blob').map(e => ({ path: e.path, size: e.size || 0, name: e.path.split('/').pop() }));
         files.sort((a,b)=> a.path.localeCompare(b.path));
         render(filterInput.value);
       })
-      .catch(err => {
-        showError('Error loading files: ' + err.message + ' You can view files directly on GitHub.');
+      .catch(_ => {
+        // fallback: call GitHub API (may be rate-limited)
+        fetch(apiUrl)
+          .then(res => {
+            console.log('GitHub API status', res.status, 'X-RateLimit-Remaining', res.headers.get('x-ratelimit-remaining'), 'X-RateLimit-Reset', res.headers.get('x-ratelimit-reset'));
+            if (res.status === 404) return res.text().then(t => { throw new Error('Repository or branch not found (404): ' + t); });
+            if (res.status === 403) return res.text().then(t => { throw new Error('API rate limit or access denied (403): ' + t); });
+            return res.json();
+          })
+          .then(data => {
+            if(!data || !data.tree) throw new Error('Unexpected API response.');
+            // tree entries: { path, mode, type, sha, size }
+            files = data.tree.filter(e => e.type === 'blob').map(e => ({ path: e.path, size: e.size || 0, name: e.path.split('/').pop() }));
+            files.sort((a,b)=> a.path.localeCompare(b.path));
+            render(filterInput.value);
+          })
+          .catch(err => {
+            showError('Error loading files: ' + err.message + ' You can view files directly on GitHub.');
+          });
       });
   }
 
